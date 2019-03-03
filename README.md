@@ -1,5 +1,7 @@
 # JSON Log Exporter
-Prometheus exporter for JSON logs, written in Go. 
+Prometheus exporter for JSON logs, written in Go. This uses 
+[hpcloud/tail](https://github.com/hpcloud/tail) for tailing
+the files.
 
 ## Installation & Usage
 Install using following command:
@@ -92,3 +94,7 @@ Following is an example configuration
     - name: count_total
       type: counter
 ```
+
+## ToDo
+1. Store the position of last line read from log file. Right now
+exporter will read the log file from beginning on restart.

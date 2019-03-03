@@ -111,7 +111,7 @@ func NewCollector(cfg *config.LogConfig) *Collector {
 		if metric.Type == "counter" {
 			numCounter--
 			m := prometheus.NewCounterVec(prometheus.CounterOpts{
-				Namespace: "jsonfile",
+				Namespace: "jsonlog",
 				Subsystem: cfg.Name,
 				Name: metric.Name,
 				Help: metric.Desc,
@@ -133,7 +133,7 @@ func NewCollector(cfg *config.LogConfig) *Collector {
 		} else if metric.Type == "gauge" {
 			numGauge--
 			m := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-				Namespace: "jsonfile",
+				Namespace: "jsonlog",
 				Subsystem: cfg.Name,
 				Name: metric.Name,
 				Help: metric.Desc,
@@ -164,7 +164,7 @@ func NewCollector(cfg *config.LogConfig) *Collector {
 			}
 
 			m := prometheus.NewHistogramVec(prometheus.HistogramOpts{
-				Namespace: "jsonfile",
+				Namespace: "jsonlog",
 				Subsystem: cfg.Name,
 				Name: metric.Name,
 				Help: metric.Desc,
@@ -200,7 +200,7 @@ func NewCollector(cfg *config.LogConfig) *Collector {
 			}
 
 			m := prometheus.NewSummaryVec(prometheus.SummaryOpts{
-				Namespace: "jsonfile",
+				Namespace: "jsonlog",
 				Subsystem: cfg.Name,
 				Name: metric.Name,
 				Help: metric.Desc,
