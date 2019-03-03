@@ -24,6 +24,11 @@ The exporter needs to be configured to be of any use. The configuration file is 
 in yaml. Configuration is list of Log groups. Each log group corresponds to possibly
 multiple files of similar format. Each log group can be configured as follows:
 
+> Note: `name` and `metric.name` are used to compute the metric name that is reported to
+prometheus. So the values for these must comply with 
+[Prometheus Metric Names Guidelines](https://prometheus.io/docs/practices/naming/#metric-names).
+
+
 | Key                 | Type               | Description                 |
 |---------------------|--------------------|-----------------------------|
 | `name`              | `string`           | A common group name for tailed files. Used as subsystem value when deriving metric name |
@@ -94,6 +99,18 @@ Following is an example configuration
     - name: count_total
       type: counter
 ```
+
+## Metric Names
+
+Metric names are derived using following scheme:
+
+```
+<namespace>_<log_group>_<metric_name>
+```
+
+The namespace used is `jsonlog`. The `<log_group>` is replaced with the name of Log group to which the metric belongs.
+`<metric_name>` is substituted with the metric name directly. For example the `count_total` counter of `requests` log 
+group in example config will be reported as `jsonlog_requests_count_total`.
 
 ## ToDo
 1. Store the position of last line read from log file. Right now
