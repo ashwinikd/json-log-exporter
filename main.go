@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/common/log"
 	"net"
 	"net/http"
-	"os"
 )
 
 var (
@@ -25,12 +24,11 @@ func main()  {
 	cfg, err := config.LoadFile(configFile)
 	if err != nil {
 		log.Fatal(err)
-		os.Exit(1)
 	}
 
-	for _, l := range cfg.Logs {
-		log.Infof("Initializing Log '%s'\n", l.Name)
-		logGroup := collector.NewCollector(l)
+	for _, logGroup := range cfg.LogGroups {
+		log.Infof("Initializing Log '%s'\n", logGroup.Name)
+		logGroup := collector.NewCollector(logGroup)
 		logGroup.Run()
 	}
 

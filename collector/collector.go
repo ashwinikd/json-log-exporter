@@ -19,7 +19,7 @@ type Collector struct {
 	histograms []*histogram
 	summaries []*summary
 
-	cfg *config.LogConfig
+	cfg *config.LogGroupConfig
 }
 
 type counter struct {
@@ -58,7 +58,7 @@ type summary struct {
 	cfg *config.MetricConfig
 }
 
-func NewCollector(cfg *config.LogConfig) *Collector {
+func NewCollector(cfg *config.LogGroupConfig) *Collector {
 	globalLabels, globalValues := cfg.Labels()
 	numCounter := 0
 	numGauge := 0

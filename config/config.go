@@ -7,11 +7,11 @@ import (
 )
 
 type Config struct {
-	Logs []*LogConfig
-	original string
+	LogGroups []*LogGroupConfig
+	original  string
 }
 
-type LogConfig struct {
+type LogGroupConfig struct {
 	Name string `yaml:"name"`
 	SourceFiles []string `yaml:"source_files"`
 	GlobalLabels  map[string]string `yaml:"labels"`
@@ -30,7 +30,7 @@ type MetricConfig struct {
 	ValueKey string `yaml:"value"`
 }
 
-func (this *LogConfig) Labels() (labels, values []string) {
+func (this *LogGroupConfig) Labels() (labels, values []string) {
 	labels = make([]string, len(this.GlobalLabels))
 	values = make([]string, len(this.GlobalLabels))
 
@@ -71,7 +71,7 @@ func LoadFile(filename string) (conf *Config, err error) {
 func load(s string) (*Config, error) {
 	var (
 		cfg  = &Config{}
-		logs []*LogConfig
+		logs []*LogGroupConfig
 	)
 
 	err := yaml.Unmarshal([]byte(s), &logs)
@@ -80,7 +80,7 @@ func load(s string) (*Config, error) {
 	}
 
 	cfg.original = s
-	cfg.Logs = logs
+	cfg.LogGroups = logs
 
 	return cfg, nil
 }
