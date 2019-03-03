@@ -18,6 +18,24 @@ Usage of json-log-exporter:
 ```
 
 ##  Configuration
+The exporter needs to be configured to be of any use. The configuration file is written
+in yaml. Configuration is list of Log groups. Each log group corresponds to possibly
+multiple files of similar format. Each log group can be configured as follows:
+
+| Key                 | Type               | Description                 |
+|---------------------|--------------------|-----------------------------|
+| `name`              | `string`           | A common group name for tailed files. Used as subsystem value when deriving metric name |
+| `source_files`      | `Array`            | List of paths of files to tail |
+| `labels`            | `Map`              | List of key value pairs of labels to apply to all the metrics derived from tailing |
+| `metrics`           | `Array`            | List of metrics to collect |
+| `metrics.name`      | `string`           | Metric name |
+| `metrics.type`      | `string`           | One of `counter`, `gauge`, `histogram` or `summary` |
+| `metrics.labels`    | `Map`              | List of key value pairs of labes to apply to this metric |
+| `metrics.value`     | `template`         | Value to use for observations. For gauge and counter the computed value is added to metric value |
+| `metrics.buckets`   | `Array`            | List of values to use as buckets. Only used for histograms |
+| `metrics.objectives`| `Map`              | Map of quantile to error. Only used for summaries. |
+| `metrics.max_age`   | `integer`          | Maximum age of bucket. Only used for summaries. |
+| `metrics.age_buckets`| `integer`         | Number of buckets to keep. Only used for summaries. |
 
 Following is an example configuration
 ```yaml
