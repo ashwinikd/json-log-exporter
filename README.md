@@ -37,6 +37,12 @@ multiple files of similar format. Each log group can be configured as follows:
 | `metrics.max_age`   | `integer`          | Maximum age of bucket. Only used for summaries. |
 | `metrics.age_buckets`| `integer`         | Number of buckets to keep. Only used for summaries. |
 
+### Templating
+Go templating language can be used for interpolating values from
+parsed log line. This can be used for label values and value field
+of metrics. 
+
+### Example
 Following is an example configuration
 ```yaml
 - name: requests
