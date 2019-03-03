@@ -5,8 +5,10 @@ import (
 	"github.com/ashwinikd/json-log-exporter/collector"
 	"github.com/ashwinikd/json-log-exporter/config"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"log"
+	"github.com/prometheus/common/log"
+	"net"
 	"net/http"
+	"os"
 )
 
 var (
@@ -22,15 +24,26 @@ func main()  {
 
 	cfg, err := config.LoadFile(configFile)
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
+		os.Exit(1)
 	}
 
 	for _, l := range cfg.Logs {
-		log.Printf("Initializing Log '%s'", l.Name)
-		collector := collector.NewCollector(l)
-		collector.Run()
+		log.Infof("Initializing Log '%s'\n", l.Name)
+		logGroup := collector.NewCollector(l)
+		logGroup.Run()
 	}
 
 	http.Handle(metricPath, promhttp.Handler())
-	http.ListenAndServe(bind, nil)
+
+	l, err := net.Listen("tcp", bind)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("HTTP server listening on %s", bind)
+
+	if err := http.Serve(l, nil); err != nil {
+		log.Fatal(err)
+		log.Fatal(l.Close())
+	}
 }

@@ -6,7 +6,8 @@ import (
 	"github.com/ashwinikd/json-log-exporter/config"
 	"github.com/hpcloud/tail"
 	"github.com/prometheus/client_golang/prometheus"
-	"log"
+	"github.com/prometheus/common/log"
+	"os"
 	"strconv"
 	"text/template"
 )
@@ -74,7 +75,7 @@ func NewCollector(cfg *config.LogConfig) *Collector {
 		} else if metric.Type == "summary" {
 			numSummary++
 		} else {
-			log.Fatalf("Found invalid Metric Type [%s]", metric.Type)
+			log.Infof("Found invalid Metric Type [%s]", metric.Type)
 		}
 	}
 
@@ -119,7 +120,8 @@ func NewCollector(cfg *config.LogConfig) *Collector {
 
 			tpl, err := template.New(cfg.Name + ":" + metric.Name + ":+value").Parse(metric.ValueKey)
 			if err != nil {
-				log.Panic(err)
+				log.Fatal(err)
+				os.Exit(1)
 			}
 
 			collector.counters[numCounter] = &counter{
@@ -140,12 +142,14 @@ func NewCollector(cfg *config.LogConfig) *Collector {
 			}, labels)
 
 			if metric.ValueKey == "" {
-				log.Panic("No key provided for gauge value.")
+				log.Fatalf("No key provided for gauge value. [%s.%s]", cfg.Name, metric.Name)
+				os.Exit(1)
 			}
 
 			tpl, err := template.New(cfg.Name + ":" + metric.Name + ":+value").Parse(metric.ValueKey)
 			if err != nil {
-				log.Panic(err)
+				log.Fatal(err)
+				os.Exit(1)
 			}
 
 			collector.gauges[numGauge] = &gauge{
@@ -172,12 +176,14 @@ func NewCollector(cfg *config.LogConfig) *Collector {
 			}, labels)
 
 			if metric.ValueKey == "" {
-				log.Panic("No key provided for histogram value.")
+				log.Fatalf("No key provided for histogram value. [%s.%s]", cfg.Name, metric.Name)
+				os.Exit(1)
 			}
 
 			tpl, err := template.New(cfg.Name + ":" + metric.Name + ":+value").Parse(metric.ValueKey)
 			if err != nil {
-				log.Panic(err)
+				log.Fatal(err)
+				os.Exit(1)
 			}
 
 			collector.histograms[numHistogram] = &histogram{
@@ -210,12 +216,14 @@ func NewCollector(cfg *config.LogConfig) *Collector {
 			}, labels)
 
 			if metric.ValueKey == "" {
-				log.Panic("No key provided for summary value.")
+				log.Fatalf("No key provided for summary value. [%s.%s]", cfg.Name, metric.Name)
+				os.Exit(1)
 			}
 
 			tpl, err := template.New(cfg.Name + ":" + metric.Name + ":+value").Parse(metric.ValueKey)
 			if err != nil {
-				log.Panic(err)
+				log.Fatal(err)
+				os.Exit(1)
 			}
 
 			collector.summaries[numSummary] = &summary{
@@ -227,7 +235,8 @@ func NewCollector(cfg *config.LogConfig) *Collector {
 				cfg: metric,
 			}
 		} else {
-			log.Fatalf("Found invalid Metric Type [%s]", metric.Type)
+			log.Fatalf("Found invalid metric type '%s'", metric.Type)
+			os.Exit(1)
 		}
 	}
 
@@ -246,54 +255,65 @@ func (this *Collector) Run() {
 		})
 
 		if err != nil {
-			log.Panic(err)
+			log.Fatal(err)
+			os.Exit(1)
 		}
 
 		go func() {
 			for line := range t.Lines {
 				b := []byte(line.Text)
-				var f interface{}
-				err := json.Unmarshal(b, &f)
+				var data interface{}
+				err := json.Unmarshal(b, &data)
 
 				if err != nil {
-					log.Print(err)
+					log.Warnf("Error in parsing line in file [%s] '%s' | Error => %s", f, line.Text, err)
 					continue
 				}
 
 				for _, m := range this.counters {
-					values := labelValues(f, m.labelValues)
+					values := labelValues(data, m.labelValues)
 					inc := 1.0
 
 					if m.key != "" {
-						vstr := executeTpl(m.valueTpl, f)
+						vstr := executeTpl(m.valueTpl, data)
 						if i, err := strconv.ParseFloat(vstr, 64); err == nil {
 							inc = i
+							m.metric.WithLabelValues(values...).Add(inc)
+						} else {
+							log.Warnf("Value for counter is invalid [%s]. Ignoring line.", vstr)
 						}
+					} else {
+						m.metric.WithLabelValues(values...).Add(inc)
 					}
-					m.metric.WithLabelValues(values...).Add(inc)
 				}
 
 				for _, m := range this.gauges {
-					values := labelValues(f, m.labelValues)
-					vstr := executeTpl(m.valueTpl, f)
+					values := labelValues(data, m.labelValues)
+					vstr := executeTpl(m.valueTpl, data)
 					if i, err := strconv.ParseFloat(vstr, 64); err == nil {
 						m.metric.WithLabelValues(values...).Add(i)
+					} else {
+						log.Warnf("Value for gauge is invalid [%s]. Ignoring line.", vstr)
 					}
 				}
 
 				for _, m := range this.histograms {
-					values := labelValues(f, m.labelValues)
-					vstr := executeTpl(m.valueTpl, f)
+					values := labelValues(data, m.labelValues)
+					vstr := executeTpl(m.valueTpl, data)
 					if i, err := strconv.ParseFloat(vstr, 64); err == nil {
 						m.metric.WithLabelValues(values...).Observe(i)
+					} else {
+						log.Warnf("Value for histogram is invalid [%s]. Ignoring line.", vstr)
 					}
 				}
 
 				for _, m := range this.summaries {
-					values := labelValues(f, m.labelValues)
-					vstr := executeTpl(m.valueTpl, f)
+					values := labelValues(data, m.labelValues)
+					vstr := executeTpl(m.valueTpl, data)
 					if i, err := strconv.ParseFloat(vstr, 64); err == nil {
 						m.metric.WithLabelValues(values...).Observe(i)
+					} else {
+						log.Warnf("Value for summary is invalid [%s]. Ignoring line.", vstr)
 					}
 				}
 			}
