@@ -87,6 +87,17 @@ func load(s string) (*Config, error) {
 	}
 
 	cfg.original = s
+	cfg.prepareLabels()
 
 	return cfg, nil
+}
+
+func (this *Config) prepareLabels() {
+	for _, logGroups := range this.LogGroups {
+		for ln, lv := range this.Labels {
+			if _, exists := logGroups.GlobalLabels[ln]; ! exists {
+				logGroups.GlobalLabels[ln] = lv
+			}
+		}
+	}
 }
