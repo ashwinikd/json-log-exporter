@@ -1,0 +1,32 @@
+---
+labels:
+  key0: value0
+log_groups:
+  - name: orders
+    files:
+      - /var/log/order-info-android.log
+      - /var/log/order-info-ios.log
+      - /var/log/order-info-others.log
+    labels:
+      key1: value1
+    metrics:
+        - name: count_total
+          log_group: orders
+          type: counter
+          export_to: export1
+          labels:
+            key2: value2
+            key1: value1_override
+  - name: payments
+    files:
+      - /var/log/payment-info.log
+    metrics:
+      - name: count_total
+        log_group: payments
+        type: counter
+        labels:
+          key2: value2
+          key1: value1_override
+exports:
+  - name: export1
+    port: 9093
