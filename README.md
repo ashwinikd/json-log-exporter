@@ -24,8 +24,14 @@ Usage of json-log-exporter:
 
 ##  Configuration
 The exporter needs to be configured to be of any use. The configuration file is written
-in yaml. Configuration is list of Log groups. Each log group corresponds to possibly
-multiple files of similar format. Each log group can be configured as follows:
+in yaml. Configuration is list of Global labels, Exports and Log groups. 
+
+The labels specified in the `labels` tags are applied to all the metrics configured. The values
+can be overridden at log group level using `log_groups.labels` key or at metric level using `log_groups.metrics.labels`.
+
+`exports` section allows you to split the metrics across different jobs. You need to specify at least 1 export url.
+
+Each log group corresponds to possibly multiple files of similar format. Each log group can be configured as follows:
 
 > Note: `name` and `metric.name` are used to compute the metric name that is reported to
 prometheus. So the values for these must comply with 
@@ -46,6 +52,7 @@ prometheus. So the values for these must comply with
 | `metrics.objectives`| `Map`              | Map of quantile to error. Only used for summaries. |
 | `metrics.max_age`   | `integer`          | Maximum age of bucket. Only used for summaries. |
 | `metrics.age_buckets`| `integer`         | Number of buckets to keep. Only used for summaries. |
+| `metrics.export_to` | `string`           | Name of the exporter from export section |
 
 ### Templating
 Go templating language can be used for interpolating values from
@@ -55,52 +62,67 @@ of metrics.
 ### Example
 Following is an example configuration
 ```yaml
-- name: requests
-  source_files:
-    - /var/log/thread1.log
-    - /var/log/thread2.log
-  labels:
-    foo: bar
-    user_agent: "{{.user_agent}}"
-    client_ip: "{{.x_forwarded_for}}"
-  metrics:
-    - name: count_total
-      type: counter
-      labels:
-        referer: "{{.referer}}"
-    - name: response_bytes_total
-      type: counter
-      value: "{{.response_bytes}}"
-      labels:
-        foo: override
-    - name: response_time_seconds
-      type: histogram
-      value: "{{.response_time}}"
-      buckets:
-        - 0.001
-        - 0.05
-        - 0.1
-      labels:
-        key1: value1
-    - name: remaining_credits
-      type: gauge
-      value: "{{.credits}}"
-    - name: request_time_seconds
-      type: summary
-      value: "{{.request_time}}"
-      objectives:
-        0.5: 0.05
-      max_age: 600
-      age_buckets: 10
-- name: actions
-  source_files:
-    - /var/log/actions.log
-  labels:
-    domain: "{{.domain}}"
-    actor: "{{.user_id}}"
-  metrics:
-    - name: count_total
-      type: counter
+---
+labels:
+  foo: bar
+exports:
+  - name: export1
+    path: /metrics/counts-and-gauges
+  - name: anotherexport
+    path: /metrics/histo-and-summ
+log_groups:
+  - name: requests
+    source_files:
+      - /var/log/thread1.log
+      - /var/log/thread2.log
+    labels:
+      foo: bar
+      user_agent: "{{.user_agent}}"
+      client_ip: "{{.x_forwarded_for}}"
+    metrics:
+      - name: count_total
+        type: counter
+        export_to: export1
+        labels:
+          referer: "{{.referer}}"
+      - name: response_bytes_total
+        type: counter
+        value: "{{.response_bytes}}"
+        export_to: export1
+        labels:
+          foo: override
+      - name: response_time_seconds
+        type: histogram
+        value: "{{.response_time}}"
+        export_to: anotherexport
+        buckets:
+          - 0.001
+          - 0.05
+          - 0.1
+        labels:
+          key1: value1
+      - name: remaining_credits
+        type: gauge
+        value: "{{.credits}}"
+        export_to: export1
+      - name: request_time_seconds
+        type: summary
+        value: "{{.request_time}}"
+        export_to: anotherexport
+        objectives:
+          0.5: 0.05
+        max_age: 600
+        age_buckets: 10
+  - name: actions
+    source_files:
+      - /var/log/actions.log
+    labels:
+      domain: "{{.domain}}"
+      actor: "{{.user_id}}"
+    metrics:
+      - name: count_total
+        type: counter
+        export_to: export1
 ```
 
 ## Metric Names
