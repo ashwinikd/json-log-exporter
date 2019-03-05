@@ -1,25 +1,61 @@
 ---
 labels:
   foo: bar
+exports:
+  - name: export1
+    path: /metrics/counts-and-gauges
+  - name: anotherexport
+    path: /metrics/histo-and-summ
 log_groups:
-  - name: orders
-    files:
-      - ./test.log
+  - name: requests
+    source_files:
+      - /var/log/thread1.log
+      - /var/log/thread2.log
     labels:
-      fizz: buzz
+      foo: bar
+      user_agent: "{{.user_agent}}"
+      client_ip: "{{.x_forwarded_for}}"
     metrics:
       - name: count_total
         type: counter
         export_to: export1
         labels:
-          user_id: "{{.user_id}}"
+          referer: "{{.referer}}"
+      - name: response_bytes_total
+        type: counter
+        value: "{{.response_bytes}}"
+        export_to: export1
+        labels:
+          foo: override
+      - name: response_time_seconds
+        type: histogram
+        value: "{{.response_time}}"
+        export_to: anotherexport
+        buckets:
+          - 0.001
+          - 0.05
+          - 0.1
+        labels:
+          key1: value1
+      - name: remaining_credits
+        type: gauge
+        value: "{{.credits}}"
+        export_to: export1
+      - name: request_time_seconds
+        type: summary
+        value: "{{.request_time}}"
+        export_to: anotherexport
+        objectives:
+          0.5: 0.05
+        max_age: 600
+        age_buckets: 10
+  - name: actions
+    source_files:
+      - /var/log/actions.log
+    labels:
+      domain: "{{.domain}}"
+      actor: "{{.user_id}}"
+    metrics:
       - name: count_total
         type: counter
-        export_to: export2
-        labels:
-          status: "{{.status}}"
-exports:
-  - name: export1
-    path: /metrics/1
-  - name: export2
-    path: /metrics/2
+        export_to: export1

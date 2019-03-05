@@ -114,7 +114,8 @@ func NewCollector(cfg *config.LogGroupConfig) *Collector {
 		}
 
 		if GetExport(metric.Export) == nil {
-			log.Fatalf("Invalid export name: %s", metric.Export)
+			log.Fatalf("Invalid export name: '%s' for counter '%s' in log group '%s'", metric.Export,
+				metric.Name, cfg.Name)
 		}
 
 		if metric.Type == "counter" {
