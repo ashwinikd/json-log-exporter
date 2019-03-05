@@ -11,7 +11,6 @@ log_groups:
       key1: value1
     metrics:
         - name: count_total
-          log_group: orders
           type: counter
           export_to: export1
           labels:
@@ -22,11 +21,11 @@ log_groups:
       - /var/log/payment-info.log
     metrics:
       - name: count_total
-        log_group: payments
         type: counter
+        export_to: export1
         labels:
           key2: value2
           key1: value1_override
 exports:
   - name: export1
-    port: 9093
+    path: /metrics

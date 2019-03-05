@@ -7,13 +7,20 @@ import (
 )
 
 type Config struct {
-	LogGroups []*LogGroupConfig
+	Labels map[string]string `yaml:"labels"`
+	LogGroups []LogGroupConfig `yaml:"log_groups"`
+	Exports []*ExportConfig `yaml:"exports"`
 	original  string
+}
+
+type ExportConfig struct {
+	Name string `yaml:"name"`
+	MetricPath string `yaml:"path"`
 }
 
 type LogGroupConfig struct {
 	Name string `yaml:"name"`
-	SourceFiles []string `yaml:"source_files"`
+	SourceFiles []string `yaml:"files"`
 	GlobalLabels  map[string]string `yaml:"labels"`
 	Metrics []*MetricConfig `yaml:"metrics"`
 }
@@ -22,6 +29,7 @@ type MetricConfig struct {
 	Name string `yaml:"name"`
 	Desc string `yaml:"help"`
 	Type string `yaml:"type"`
+	Export string `yaml:"export_to"`
 	Buckets []float64 `yaml:"buckets"`
 	Objectives map[float64]float64 `yaml:"objectives"`
 	SummaryMaxAge time.Duration `yaml:"max_age"`
@@ -71,16 +79,14 @@ func LoadFile(filename string) (conf *Config, err error) {
 func load(s string) (*Config, error) {
 	var (
 		cfg  = &Config{}
-		logs []*LogGroupConfig
 	)
 
-	err := yaml.Unmarshal([]byte(s), &logs)
+	err := yaml.Unmarshal([]byte(s), &cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	cfg.original = s
-	cfg.LogGroups = logs
 
 	return cfg, nil
 }

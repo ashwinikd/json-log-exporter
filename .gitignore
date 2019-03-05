@@ -3,3 +3,4 @@
 *.iml
 *.idx
 bin
+json-log-exporter

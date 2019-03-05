@@ -29,6 +29,7 @@ type counter struct {
 	labelNames []string
 	labelValues []*template.Template
 	cfg *config.MetricConfig
+	exportTo string
 }
 
 type gauge struct {
@@ -38,6 +39,7 @@ type gauge struct {
 	labelNames []string
 	labelValues []*template.Template
 	cfg *config.MetricConfig
+	exportTo string
 }
 
 type histogram struct {
@@ -47,6 +49,7 @@ type histogram struct {
 	labelNames []string
 	labelValues []*template.Template
 	cfg *config.MetricConfig
+	exportTo string
 }
 
 type summary struct {
@@ -56,6 +59,7 @@ type summary struct {
 	labelNames []string
 	labelValues []*template.Template
 	cfg *config.MetricConfig
+	exportTo string
 }
 
 func NewCollector(cfg *config.LogGroupConfig) *Collector {
@@ -109,6 +113,10 @@ func NewCollector(cfg *config.LogGroupConfig) *Collector {
 			}
 		}
 
+		if GetExport(metric.Export) == nil {
+			log.Fatalf("Invalid export name: %s", metric.Export)
+		}
+
 		if metric.Type == "counter" {
 			numCounter--
 			m := prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -131,6 +139,7 @@ func NewCollector(cfg *config.LogGroupConfig) *Collector {
 				labelNames: labels,
 				labelValues: values,
 				cfg: metric,
+				exportTo: metric.Export,
 			}
 		} else if metric.Type == "gauge" {
 			numGauge--
@@ -159,6 +168,7 @@ func NewCollector(cfg *config.LogGroupConfig) *Collector {
 				labelNames: labels,
 				labelValues: values,
 				cfg: metric,
+				exportTo: metric.Export,
 			}
 		} else if metric.Type == "histogram" {
 			numHistogram--
@@ -193,6 +203,7 @@ func NewCollector(cfg *config.LogGroupConfig) *Collector {
 				labelNames: labels,
 				labelValues: values,
 				cfg: metric,
+				exportTo: metric.Export,
 			}
 		} else if metric.Type == "summary" {
 			numSummary--
@@ -233,6 +244,7 @@ func NewCollector(cfg *config.LogGroupConfig) *Collector {
 				labelNames: labels,
 				labelValues: values,
 				cfg: metric,
+				exportTo: metric.Export,
 			}
 		} else {
 			log.Fatalf("Found invalid metric type '%s'", metric.Type)
@@ -323,16 +335,16 @@ func (this *Collector) Run() {
 
 func (this *Collector) registerMetrics() {
 	for _, m := range this.counters {
-		prometheus.MustRegister(m.metric)
+		GetExport(m.exportTo).Registry.MustRegister(m.metric)
 	}
 	for _, m := range this.gauges {
-		prometheus.MustRegister(m.metric)
+		GetExport(m.exportTo).Registry.MustRegister(m.metric)
 	}
 	for _, m := range this.histograms {
-		prometheus.MustRegister(m.metric)
+		GetExport(m.exportTo).Registry.MustRegister(m.metric)
 	}
 	for _, m := range this.summaries {
-		prometheus.MustRegister(m.metric)
+		GetExport(m.exportTo).Registry.MustRegister(m.metric)
 	}
 }
 

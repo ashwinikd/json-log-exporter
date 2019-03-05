@@ -4,7 +4,6 @@ import (
 	"flag"
 	"github.com/ashwinikd/json-log-exporter/collector"
 	"github.com/ashwinikd/json-log-exporter/config"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/log"
 	"net"
 	"net/http"
@@ -26,13 +25,17 @@ func main()  {
 		log.Fatal(err)
 	}
 
+	collector.InitializeExports(cfg.Exports)
+
 	for _, logGroup := range cfg.LogGroups {
 		log.Infof("Initializing Log '%s'\n", logGroup.Name)
-		logGroup := collector.NewCollector(logGroup)
+		logGroup := collector.NewCollector(&logGroup)
 		logGroup.Run()
 	}
 
-	http.Handle(metricPath, promhttp.Handler())
+	for _, export := range cfg.Exports {
+		http.Handle(export.MetricPath, collector.GetExport(export.Name).Handler)
+	}
 
 	l, err := net.Listen("tcp", bind)
 	if err != nil {
