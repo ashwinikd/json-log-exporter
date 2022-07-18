@@ -1,0 +1,29 @@
+# Configuration example to parse and expose JSON-formatted request logs from Caddy webserver
+
+namespace: caddy
+exports:
+  - name: default
+    path: /metrics
+log_groups:
+  - name: mysite
+    subsystem:
+    files:
+      - /var/log/caddy/mysite.access.log
+    labels:
+      logfile: "mysite.access.log"
+      host: "{{.request.host}}"
+      proto: "{{.request.proto}}"
+      method: "{{.request.method}}"
+      response: "{{.status}}"
+    metrics:
+      - name: count_total
+        type: counter
+        export_to: default
+      - name: bytes_total
+        type: counter
+        value: "{{.size}}"
+        export_to: default
+      - name: duration_total
+        type: counter
+        value: "{{.duration}}"
+        export_to: default

@@ -1,4 +1,4 @@
----
+namespace: jsonlog
 labels:
   foo: bar
 exports:
@@ -8,7 +8,8 @@ exports:
     path: /metrics/histo-and-summ
 log_groups:
   - name: requests
-    source_files:
+    subsystem: requests
+    files:
       - /var/log/thread1.log
       - /var/log/thread2.log
     labels:
@@ -50,7 +51,8 @@ log_groups:
         max_age: 600
         age_buckets: 10
   - name: actions
-    source_files:
+    subsystem: actions
+    files:
       - /var/log/actions.log
     labels:
       domain: "{{.domain}}"

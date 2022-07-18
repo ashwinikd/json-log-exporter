@@ -9,7 +9,7 @@ the files.
 ## Installation & Usage
 Install using following command:
 ```shell
-go get github.com:ashwinikd/json-log-exporter.git
+go install github.com/ashwinikd/json-log-exporter@latest
 ```
 Usage:
 ```
@@ -18,8 +18,6 @@ Usage of json-log-exporter:
     	Configuration file. (default "json_log_exporter.yml")
   -web.listen-address string
     	Address to listen on for the web interface. (default ":9321")
-  -web.telemetry-path string
-    	Path under which to expose Prometheus metrics. (default "/metrics")
 ```
 
 ##  Configuration
@@ -38,21 +36,22 @@ prometheus. So the values for these must comply with
 [Prometheus Metric Names Guidelines](https://prometheus.io/docs/practices/naming/#metric-names).
 
 
-| Key                 | Type               | Description                 |
-|---------------------|--------------------|-----------------------------|
-| `name`              | `string`           | A common group name for tailed files. Used as subsystem value when deriving metric name |
-| `source_files`      | `Array`            | List of paths of files to tail |
-| `labels`            | `Map`              | List of key value pairs of labels to apply to all the metrics derived from tailing |
-| `metrics`           | `Array`            | List of metrics to collect |
-| `metrics.name`      | `string`           | Metric name |
-| `metrics.type`      | `string`           | One of `counter`, `gauge`, `histogram` or `summary` |
-| `metrics.labels`    | `Map`              | List of key value pairs of labes to apply to this metric |
-| `metrics.value`     | `template`         | Value to use for observations. For gauge and counter the computed value is added to metric value |
-| `metrics.buckets`   | `Array`            | List of values to use as buckets. Only used for histograms |
-| `metrics.objectives`| `Map`              | Map of quantile to error. Only used for summaries. |
-| `metrics.max_age`   | `integer`          | Maximum age of bucket. Only used for summaries. |
-| `metrics.age_buckets`| `integer`         | Number of buckets to keep. Only used for summaries. |
-| `metrics.export_to` | `string`           | Name of the exporter from export section |
+| Key                   | Type       | Description                                                                                      |
+|-----------------------|------------|--------------------------------------------------------------------------------------------------|
+| `name`                | `string`   | A common group name for tailed files.                                                            |
+| `subsystem`           | `string`   | An optional subsystem name, used for deriving the metric name.                                   |
+| `files`               | `Array`    | List of paths of files to tail                                                                   |
+| `labels`              | `Map`      | List of key value pairs of labels to apply to all the metrics derived from tailing               |
+| `metrics`             | `Array`    | List of metrics to collect                                                                       |
+| `metrics.name`        | `string`   | Metric name                                                                                      |
+| `metrics.type`        | `string`   | One of `counter`, `gauge`, `histogram` or `summary`                                              |
+| `metrics.labels`      | `Map`      | List of key value pairs of labes to apply to this metric                                         |
+| `metrics.value`       | `template` | Value to use for observations. For gauge and counter the computed value is added to metric value |
+| `metrics.buckets`     | `Array`    | List of values to use as buckets. Only used for histograms                                       |
+| `metrics.objectives`  | `Map`      | Map of quantile to error. Only used for summaries.                                               |
+| `metrics.max_age`     | `integer`  | Maximum age of bucket. Only used for summaries.                                                  |
+| `metrics.age_buckets` | `integer`  | Number of buckets to keep. Only used for summaries.                                              |
+| `metrics.export_to`   | `string`   | Name of the exporter from export section                                                         |
 
 ### Templating
 Go templating language can be used for interpolating values from
@@ -62,7 +61,7 @@ of metrics.
 ### Example
 Following is an example configuration
 ```yaml
----
+namespace: jsonlog
 labels:
   foo: bar
 exports:
@@ -72,7 +71,8 @@ exports:
     path: /metrics/histo-and-summ
 log_groups:
   - name: requests
-    source_files:
+    subsystem: requests
+    files:
       - /var/log/thread1.log
       - /var/log/thread2.log
     labels:
@@ -114,7 +114,8 @@ log_groups:
         max_age: 600
         age_buckets: 10
   - name: actions
-    source_files:
+    subsystem: actions
+    files:
       - /var/log/actions.log
     labels:
       domain: "{{.domain}}"
@@ -130,11 +131,10 @@ log_groups:
 Metric names are derived using following scheme:
 
 ```
-<namespace>_<log_group>_<metric_name>
+<namespace>_<subsystem>_<metric_name>
 ```
 
-The namespace used is `jsonlog`. The `<log_group>` is replaced with the name of Log group to which the metric belongs.
-`<metric_name>` is substituted with the metric name directly. For example the `count_total` counter of `requests` log 
+Both `<namespace>` and `<subsystem>` can be left blank optionally. `<metric_name>` is substituted with the metric name directly. For example the `count_total` counter of `requests` log 
 group in example config will be reported as `jsonlog_requests_count_total`.
 
 ## ToDo
