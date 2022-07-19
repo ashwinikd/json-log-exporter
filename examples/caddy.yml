@@ -8,9 +8,9 @@ log_groups:
   - name: mysite
     subsystem:
     files:
-      - /var/log/caddy/mysite.access.log
+      - /var/log/caddy/mysite-01.access.log
+      - /var/log/caddy/mysite-02.access.log
     labels:
-      logfile: "mysite.access.log"
       host: "{{.request.host}}"
       proto: "{{.request.proto}}"
       method: "{{.request.method}}"
@@ -24,6 +24,17 @@ log_groups:
         value: "{{.size}}"
         export_to: default
       - name: duration_total
-        type: counter
+        type: histogram
+        buckets:
+          - 0.001
+          - 0.01
+          - 0.05
+          - 0.1
+          - 0.5
+          - 1
+          - 5
+          - 10
+          - 30
+          - 60
         value: "{{.duration}}"
         export_to: default
